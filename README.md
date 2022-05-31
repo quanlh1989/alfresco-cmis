@@ -8,10 +8,10 @@ Access client to the Alfresco APIs (Rest and CMIS)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-## Instalació
-```bash
-composer require ajtarragona/alfresco-laravel:"@dev"
-``` 
+<!-- ## Instalació -->
+<!-- ```bash -->
+<!-- composer require ajtarragona/alfresco-laravel:"@dev" -->
+<!-- ``` -->
 
 ## Configuració
 Pots configurar el paquet a través de l'arxiu `.env` de l'aplicació. Aquests son els parámetres disponibles :
