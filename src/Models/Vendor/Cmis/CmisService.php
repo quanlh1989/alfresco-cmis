@@ -751,7 +751,7 @@ xmlns:cmisra="http://docs.oasis-open.org/ns/cmis/restatom/200908/">
 		$varmap = $options;
 		$varmap["path"] = $path;
 		$obj_url = $this->processTemplate($this->workspace->uritemplates['objectbypath'], $varmap);
-		//dump($obj_url);
+		// dd($obj_url);
 		$ret = $this->doGet($obj_url);
 		$obj = $this->extractObject($ret->body);
 		$this->cacheObjectInfo($obj);

@@ -4,6 +4,8 @@ namespace Ajtarragona\AlfrescoLaravel\Models;
 
 use Ajtarragona\AlfrescoLaravel\Models\AlfrescoCmisProvider;
 use Ajtarragona\AlfrescoLaravel\Models\AlfrescoRestProvider;
+use Ajtarragona\AlfrescoLaravel\Exceptions\AlfrescoConnectionException;
+use Ajtarragona\AlfrescoLaravel\Exceptions\AlfrescoNotSupportMethodException;
 
 
 class AlfrescoService
@@ -19,11 +21,23 @@ class AlfrescoService
 
 	public function __construct($settings=false) {
 
-		if(!$settings) $settings=config('alfresco');
-		$settings=to_object($settings);
+		if(!$settings){
+            throw new AlfrescoConnectionException('You can define config');
+        }
+        $baseConfig = config('alfresco');
+        $baseConfig['url'] = !empty($settings['base_url']) ? $settings['base_url'] : $baseConfig['url'];
+        $baseConfig['api'] = !empty($settings['type']) ? $settings['type'] : $baseConfig['api'];
+        $baseConfig['user'] = !empty($settings['user']) ? $settings['user'] : $baseConfig['user'];
+        $baseConfig['pass'] = !empty($settings['password']) ? $settings['password'] : $baseConfig['pass'];
+        $baseConfig['base_path'] = !empty($settings['base_path']) ? $settings['base_path'] : $baseConfig['base_path'];
+		$settings=to_object($baseConfig);
 
-		if($settings->api=="cmis") $this->provider = new AlfrescoCmisProvider($settings);
-		else $this->provider = new AlfrescoRestProvider($settings);
+		if($settings->api=="atom"){
+            $this->provider = new AlfrescoCmisProvider($settings);
+        }else{
+            throw new AlfrescoNotSupportMethodException('Can not Support Method!');
+        }
+		// else $this->provider = new AlfrescoRestProvider($settings);
 
 		//$this->connect();
 	}
@@ -105,8 +119,8 @@ class AlfrescoService
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function downloadObject($objectId, $stream=false){
-		$this->provider->downloadObject($objectId, $stream);
+	public function downloadObject($objectId, $stream=false, $pathFile=''){
+		$this->provider->downloadObject($objectId, $stream, $pathFile);
 	}
 
 
@@ -122,6 +136,21 @@ class AlfrescoService
 	}
 
 
+    /**
+     * Undocumented function
+     *
+     * @param $folderId
+     * @return void
+     */
+    public function getFolderTree($folderId)
+    {
+        return $this->provider->getFolderTree($folderId);
+    }
+
+    public function getDescendants($folderId, $depth=-1, $options = array ())
+    {
+        return $this->provider->getDescendants($folderId, $depth, $options);
+    }
 
 	/**
 	 * Retorna una carpeta d'Alfresco passant la seva ruta (a partir del basepath)

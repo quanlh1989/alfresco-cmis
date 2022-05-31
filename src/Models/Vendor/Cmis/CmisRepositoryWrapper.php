@@ -197,7 +197,7 @@ class CmisRepositoryWrapper
     protected function doRequest($url, $method = "GET", $content = null, $contentType = null, $charset = null)
     {
 
-
+        $url = str_replace('localhost', 'host.docker.internal', $url);
         // Process the HTTP request
         // 'til now only the GET request has been tested
         // Does not URL encode any inputs yet
@@ -307,6 +307,7 @@ class CmisRepositoryWrapper
 
     protected static function processTemplate($template, $values = array ())
     {
+        // dd($template);
         // Fill in the blanks --
         $retval = $template;
         if (is_array($values))

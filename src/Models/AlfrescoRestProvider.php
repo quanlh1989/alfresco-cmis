@@ -367,7 +367,7 @@ class AlfrescoRestProvider
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function downloadObject($objectId, $stream=false){
+	public function downloadObject($objectId, $stream=false, $pathFile=''){
 		$obj=$this->getObject($objectId);
 
 		if($obj->isDocument()){
@@ -390,7 +390,8 @@ class AlfrescoRestProvider
 				}
 				// flush the result as an HTTP download
 			}
-			$zip->Flush(TbsZip::TBSZIP_DOWNLOAD, $obj->name.".zip");
+            $path = !empty($pathFile) ? $pathFile : $obj->name.".zip";
+			$zip->Flush(TbsZip::TBSZIP_DOWNLOAD, $path);
 			exit;
 
 

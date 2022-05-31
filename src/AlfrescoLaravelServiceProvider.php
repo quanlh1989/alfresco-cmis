@@ -16,9 +16,9 @@ class AlfrescoLaravelServiceProvider extends ServiceProvider
     {
         //vistas
         // $this->loadViewsFrom(__DIR__.'/resources/views', 'alfresco');
-        
+
         // $this->loadRoutesFrom(__DIR__.'/routes.php');
-        
+
         $this->bootConfig();
 
 
@@ -30,15 +30,15 @@ class AlfrescoLaravelServiceProvider extends ServiceProvider
      * @return void
      */
     protected function bootConfig()
-    {   
+    {
         $path = __DIR__.'/Config/alfresco.php';
-       
+
         $this->mergeConfigFrom($path, 'alfresco');
-        
+
         $this->publishes([
             $path => config_path('alfresco.php')
         ],'ajtarragona-alfresco');
-        
+
     }
 
 
@@ -51,7 +51,7 @@ class AlfrescoLaravelServiceProvider extends ServiceProvider
     {
         //$this->app->make('Ajtarragona\AlfrescoLaravel\Controllers\AlfrescoLaravelController');
         //$this->app->make('Ajtarragona\AlfrescoLaravel\Models\AlfrescoLaravel');
-        
+
         //registro middleware
         // $this->app['router']->aliasMiddleware('alfresco-explorer', \Ajtarragona\AlfrescoLaravel\Middlewares\AlfrescoExplorer::class);
 

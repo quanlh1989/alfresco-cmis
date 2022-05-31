@@ -121,6 +121,9 @@ class AlfrescoFolder extends AlfrescoObject{
 		return $this->provider()->getDocuments($this->id,$page);
 	}
 
+    public function getDescendants() {
+		return $this->provider()->getDescendants($this->id,$dept=-1, $options=array());
+	}
 
 	/**
 	 * Retorna el fill d'una carpeta Alfresco amb un nom passat

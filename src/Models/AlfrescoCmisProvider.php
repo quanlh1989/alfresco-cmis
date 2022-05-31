@@ -286,7 +286,7 @@ class AlfrescoCmisProvider
 				$cmisobject = $this->session->getObjectByPath($this->rootpath);
 			}else{
 				$cmisobject=$this->session->getObjectByPath($thepath);
-				//dd($cmisobject);
+				// dd($cmisobject);
 			}
 			//_dump($cmisfolder);
 
@@ -327,7 +327,7 @@ class AlfrescoCmisProvider
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function downloadObject($objectId, $stream=false){
+	public function downloadObject($objectId, $stream=false, $pathFile=''){
 		$obj=$this->getObject($objectId);
 
 		if($obj->isDocument()){
@@ -355,7 +355,8 @@ class AlfrescoCmisProvider
 					// flush the result as an HTTP download
 				}
 				// $zip->Flush(TbsZip::TBSZIP_DOWNLOAD, $obj->name.".zip");
-				$zip->Flush(TbsZip::TBSZIP_FILE, $obj->name.".zip");
+                $path = !empty($pathFile) ? $pathFile : $obj->name.".zip";
+				$zip->Flush(TbsZip::TBSZIP_FILE, $path);
 				exit;
 			}
 
@@ -404,6 +405,7 @@ class AlfrescoCmisProvider
 			if($folderPath=="") return $this->getBaseFolder();
 
 			$ret=$this->getObjectByPath($folderPath);
+
 			if($ret->isFolder()){
 				return $ret;
 			}else{
@@ -443,6 +445,7 @@ class AlfrescoCmisProvider
 	public function getDocuments($folderId){
 		return $this->getChildren($folderId, self::TYPE_DOCUMENT);
 	}
+
 	/**
 	 * Retorna els fills d'una carpeta d'Alfresco passant el seu ID
 	 * @param folderId
@@ -476,6 +479,14 @@ class AlfrescoCmisProvider
 		}
 	}
 
+    public function getDescendants($folderId, $depth=-1, $options = array ())
+    {
+        $descendants =  $this->session->getDescendants($folderId, $depth, $options);
+        if($descendants)
+            return $this->scandirRecursive($descendants);
+        return null;
+    }
+
     /**
 	 * Retorna els fills d'una carpeta d'Alfresco passant el seu ID
 	 * @param folderId
@@ -485,8 +496,8 @@ class AlfrescoCmisProvider
 	public function getFolderTree($folderId){
 		// throws AlfrescoObjectNotFoundException {
 		try{
-			$tree=$this->session->getFolderTree($folderId, '-1');
-            $children=$this->session->getChildren($folderId);
+			$tree=$this->session->getFolderTree($folderId, -1);
+            // $children=$this->session->getChildren($folderId);
 			//dump($children);
 			// $ret=array();
 			// if($children){
@@ -1164,18 +1175,21 @@ class AlfrescoCmisProvider
 
 
 	public function getDownloadUrl($object){
-		return route('alfresco.download',[$object->id]);
+        return '';
+		// return route('alfresco.download',[$object->id]);
     }
 
     /*return the user download url of a file */
     public function getViewUrl($object){
-        return route('alfresco.view',[$object->id]);
+        return '';
+        // return route('alfresco.view',[$object->id]);
 
     }
 
     /*return the user preview url of a file */
     public function getPreviewUrl($object){
-        return route('alfresco.preview',[$object->id]);
+        return '';
+        // return route('alfresco.preview',[$object->id]);
 
     }
 
