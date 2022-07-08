@@ -139,6 +139,7 @@ class CmisRepositoryWrapper
         $this->auth_options = $options;
         $this->authenticated = false;
         $retval = $this->doGet($this->url);
+
         if ($retval->code == self::HTTP_OK || $retval->code == self::HTTP_CREATED)
         {
             $this->authenticated = true;
@@ -196,8 +197,12 @@ class CmisRepositoryWrapper
 
     protected function doRequest($url, $method = "GET", $content = null, $contentType = null, $charset = null)
     {
+        $domainBase = $this->getDomain($this->url);
+        $domainUrl = $this->getDomain($url);
+        if($domainBase !== $domainUrl && strpos($domainUrl, 'localhost') !== false){
+            $url = str_replace($domainUrl, $domainBase, $url);
+        }
 
-        $url = str_replace('localhost', 'host.docker.internal', $url);
         // Process the HTTP request
         // 'til now only the GET request has been tested
         // Does not URL encode any inputs yet
@@ -680,5 +685,20 @@ class CmisRepositoryWrapper
         }
 
         return $retval;
+    }
+    /**
+     * get Domain in url
+     *
+     * @param string $url
+     * @return string
+     */
+    protected function getDomain($url){
+        try{
+            $urlBase = explode('://', $url)[1];
+            $domain = explode('/', $urlBase)[0];
+            return $domain;
+        }catch(\Exception $e){
+            return "";
+        }
     }
 }

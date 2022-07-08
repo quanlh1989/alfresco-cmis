@@ -304,11 +304,10 @@ class AlfrescoCmisProvider
 	private function scandirRecursive($descendants){
 
 		$objects=$descendants->objectList;
-
 		$ret=array();
 		foreach($objects as $obj){
 			$okobj=$this->fromCmisObject($obj);
-			if($okobj->isFolder()){
+			if($okobj?->isFolder()){
 
 				if(isset($obj->children)){
 					$ret=array_merge($ret,$this->scandirRecursive($obj->children));
@@ -484,6 +483,7 @@ class AlfrescoCmisProvider
         $descendants =  $this->session->getDescendants($folderId, $depth, $options);
         if($descendants)
             return $this->scandirRecursive($descendants);
+
         return null;
     }
 
