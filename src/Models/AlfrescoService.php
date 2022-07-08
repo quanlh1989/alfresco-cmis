@@ -11,32 +11,34 @@ use Ajtarragona\AlfrescoLaravel\Exceptions\AlfrescoNotSupportMethodException;
 class AlfrescoService
 {
 
-    const REPEATED_RENAME = "rename";
-    const REPEATED_OVERWRITE = "overwrite";
-    const REPEATED_DENY = "deny" ;
+	const REPEATED_RENAME = "rename";
+	const REPEATED_OVERWRITE = "overwrite";
+	const REPEATED_DENY = "deny";
 
 
 	protected $provider;
 
 
-	public function __construct($settings=false) {
+	public function __construct($settings = false)
+	{
 
-		if(!$settings){
-            throw new AlfrescoConnectionException('You can define config');
-        }
-        $baseConfig = config('alfresco');
-        $baseConfig['url'] = !empty($settings['base_url']) ? $settings['base_url'] : $baseConfig['url'];
-        $baseConfig['api'] = !empty($settings['type']) ? $settings['type'] : $baseConfig['api'];
-        $baseConfig['user'] = !empty($settings['user']) ? $settings['user'] : $baseConfig['user'];
-        $baseConfig['pass'] = !empty($settings['password']) ? $settings['password'] : $baseConfig['pass'];
-        $baseConfig['base_path'] = !empty($settings['base_path']) ? $settings['base_path'] : $baseConfig['base_path'];
-		$settings=to_object($baseConfig);
+		if (!$settings) {
+			throw new AlfrescoConnectionException('You can define config');
+		}
+		$baseConfig = config('alfresco');
+		$baseConfig['url'] = !empty($settings['base_url']) ? $settings['base_url'] : $baseConfig['url'];
+		$baseConfig['api'] = !empty($settings['type']) ? $settings['type'] : $baseConfig['api'];
+		$baseConfig['user'] = !empty($settings['user']) ? $settings['user'] : $baseConfig['user'];
+		$baseConfig['pass'] = !empty($settings['password']) ? $settings['password'] : $baseConfig['pass'];
+		$baseConfig['base_path'] = !empty($settings['base_path']) ? $settings['base_path'] : $baseConfig['base_path'];
+		$baseConfig['company_id'] = !empty($settings['company_id']) ? $settings['company_id'] : null;
+		$settings = to_object($baseConfig);
 
-		if($settings->api=="atom"){
-            $this->provider = new AlfrescoCmisProvider($settings);
-        }else{
-            throw new AlfrescoNotSupportMethodException('Can not Support Method!');
-        }
+		if ($settings->api == "atom") {
+			$this->provider = new AlfrescoCmisProvider($settings);
+		} else {
+			throw new AlfrescoNotSupportMethodException('Can not Support Method!');
+		}
 		// else $this->provider = new AlfrescoRestProvider($settings);
 
 		//$this->connect();
@@ -49,7 +51,8 @@ class AlfrescoService
 	 * Retorna el directori arrel des del qual s'executaran els altres mètodes
 	 * @return String
 	 */
-	public function getBasepath($full=false){
+	public function getBasepath($full = false)
+	{
 		return $this->provider->getBasepath($full);
 	}
 
@@ -58,7 +61,8 @@ class AlfrescoService
 	 * Defineix el directori arrel des del qual s'executaran els altres mètodes.
 	 * @param basepath
 	 */
-	public function setBasepath($path){
+	public function setBasepath($path)
+	{
 		$this->provider->setBasepath($path);
 	}
 
@@ -69,7 +73,8 @@ class AlfrescoService
 	 * @return
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getBaseFolder(){ // throws AlfrescoObjectNotFoundException{
+	public function getBaseFolder()
+	{ // throws AlfrescoObjectNotFoundException{
 
 		return $this->provider->getBaseFolder();
 	}
@@ -77,14 +82,16 @@ class AlfrescoService
 
 
 
-	public function exists($objectId){
+	public function exists($objectId)
+	{
 		return $this->provider->exists($objectId);
 	}
 
 
-    public function existsPath($objectPath){
+	public function existsPath($objectPath)
+	{
 		return $this->provider->existsPath($objectPath);
-    }
+	}
 
 
 
@@ -96,7 +103,8 @@ class AlfrescoService
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getObject($objectId){
+	public function getObject($objectId)
+	{
 		return $this->provider->getObject($objectId);
 	}
 
@@ -107,7 +115,8 @@ class AlfrescoService
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getObjectByPath($objectPath){
+	public function getObjectByPath($objectPath)
+	{
 		return $this->provider->getObjectByPath($objectPath);
 	}
 
@@ -119,7 +128,8 @@ class AlfrescoService
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function downloadObject($objectId, $stream=false, $pathFile=''){
+	public function downloadObject($objectId, $stream = false, $pathFile = '')
+	{
 		$this->provider->downloadObject($objectId, $stream, $pathFile);
 	}
 
@@ -131,26 +141,27 @@ class AlfrescoService
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getFolder($folderId){// throws AlfrescoObjectNotFoundException {
+	public function getFolder($folderId)
+	{ // throws AlfrescoObjectNotFoundException {
 		return $this->provider->getFolder($folderId);
 	}
 
 
-    /**
-     * Undocumented function
-     *
-     * @param $folderId
-     * @return void
-     */
-    public function getFolderTree($folderId)
-    {
-        return $this->provider->getFolderTree($folderId);
-    }
+	/**
+	 * Undocumented function
+	 *
+	 * @param $folderId
+	 * @return void
+	 */
+	public function getFolderTree($folderId)
+	{
+		return $this->provider->getFolderTree($folderId);
+	}
 
-    public function getDescendants($folderId, $depth=-1, $options = array ())
-    {
-        return $this->provider->getDescendants($folderId, $depth, $options);
-    }
+	public function getDescendants($folderId, $depth = -1, $options = array())
+	{
+		return $this->provider->getDescendants($folderId, $depth, $options);
+	}
 
 	/**
 	 * Retorna una carpeta d'Alfresco passant la seva ruta (a partir del basepath)
@@ -158,7 +169,8 @@ class AlfrescoService
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getFolderByPath($folderPath){// throws AlfrescoObjectNotFoundException {
+	public function getFolderByPath($folderPath)
+	{ // throws AlfrescoObjectNotFoundException {
 		return $this->provider->getFolderByPath($folderPath);
 	}
 
@@ -169,7 +181,8 @@ class AlfrescoService
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	 public function getParent($objectId){// throws AlfrescoObjectNotFoundException {
+	public function getParent($objectId)
+	{ // throws AlfrescoObjectNotFoundException {
 		return $this->provider->getParent($objectId);
 	}
 
@@ -180,8 +193,9 @@ class AlfrescoService
 	 * @return AlfrescoFolder[]
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getChildren($folderId, $objectType=false,$page=1){
-		return $this->provider->getChildren($folderId, $objectType,$page);
+	public function getChildren($folderId, $objectType = false, $page = 1)
+	{
+		return $this->provider->getChildren($folderId, $objectType, $page);
 	}
 
 
@@ -196,7 +210,8 @@ class AlfrescoService
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function createFolder($folderName, $parentId=false){
+	public function createFolder($folderName, $parentId = false)
+	{
 		return $this->provider->createFolder($folderName, $parentId);
 	}
 
@@ -209,7 +224,8 @@ class AlfrescoService
 	 * @return AlfrescoDocument
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getDocument($documentId){//	throws AlfrescoObjectNotFoundException {
+	public function getDocument($documentId)
+	{ //	throws AlfrescoObjectNotFoundException {
 		return $this->provider->getDocument($documentId);
 	}
 
@@ -222,12 +238,14 @@ class AlfrescoService
 	 * @return AlfrescoDocument
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getDocumentByPath($documentPath){// throws AlfrescoObjectNotFoundException {
+	public function getDocumentByPath($documentPath)
+	{ // throws AlfrescoObjectNotFoundException {
 		return $this->provider->getDocumentByPath($documentPath);
 	}
 
 
-	public function getDocumentContent($documentId){
+	public function getDocumentContent($documentId)
+	{
 		return $this->provider->getDocumentContent($documentId);
 	}
 
@@ -237,7 +255,8 @@ class AlfrescoService
 	 * @param objectId
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function delete($objectId){// throws AlfrescoObjectNotFoundException {
+	public function delete($objectId)
+	{ // throws AlfrescoObjectNotFoundException {
 		return $this->provider->delete($objectId);
 	}
 
@@ -250,7 +269,8 @@ class AlfrescoService
 	 * @param folderId
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function copy($objectId, $folderId){// throws AlfrescoObjectNotFoundException,
+	public function copy($objectId, $folderId)
+	{ // throws AlfrescoObjectNotFoundException,
 		return $this->provider->copy($objectId, $folderId);
 	}
 
@@ -263,7 +283,8 @@ class AlfrescoService
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function copyByPath($objectId, $folderPath){
+	public function copyByPath($objectId, $folderPath)
+	{
 		return $this->provider->copyByPath($objectId, $folderPath);
 	}
 
@@ -279,7 +300,8 @@ class AlfrescoService
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function move($objectId, $folderId){// throws AlfrescoObjectNotFoundException,
+	public function move($objectId, $folderId)
+	{ // throws AlfrescoObjectNotFoundException,
 		return $this->provider->move($objectId, $folderId);
 	}
 
@@ -293,7 +315,8 @@ class AlfrescoService
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function moveByPath($objectId, $folderPath){
+	public function moveByPath($objectId, $folderPath)
+	{
 		return $this->provider->moveByPath($objectId, $folderPath);
 	}
 
@@ -308,7 +331,8 @@ class AlfrescoService
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function rename($objectId, $newName){// throws AlfrescoObjectNotFoundException, AlfrescoObjectAlreadyExistsException{
+	public function rename($objectId, $newName)
+	{ // throws AlfrescoObjectNotFoundException, AlfrescoObjectAlreadyExistsException{
 		return $this->provider->rename($objectId, $newName);
 	}
 
@@ -322,9 +346,9 @@ class AlfrescoService
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function createDocument($parentId, $filename, $filecontent, $filetype=false){
+	public function createDocument($parentId, $filename, $filecontent, $filetype = false)
+	{
 		return $this->provider->createDocument($parentId, $filename, $filecontent, $filetype);
-
 	}
 
 
@@ -336,14 +360,16 @@ class AlfrescoService
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function createDocumentByPath($parentPath, $filename, $filecontent, $filetype=false){
+	public function createDocumentByPath($parentPath, $filename, $filecontent, $filetype = false)
+	{
 		return $this->provider->createDocumentByPath($parentPath, $filename, $filecontent, $filetype);
 	}
 
 
 
 
-	public function upload($parentId, $documents){
+	public function upload($parentId, $documents)
+	{
 		return $this->provider->upload($parentId, $documents);
 	}
 
@@ -353,18 +379,21 @@ class AlfrescoService
 	 * Retorna todos los Sites de alfresco (como objetos AlfrescoFolder)
 	 * @return
 	 */
-	public function getSites(){
+	public function getSites()
+	{
 		return $this->provider->getSites();
 	}
 
 
-    public function getRepositoryInfo(){
-        return $this->provider->getRepositoryInfo();
-    }
+	public function getRepositoryInfo()
+	{
+		return $this->provider->getRepositoryInfo();
+	}
 
-    public function getContentChanges($options=array()){
-        return $this->provider->getContentChanges($options);
-    }
+	public function getContentChanges($options = array())
+	{
+		return $this->provider->getContentChanges($options);
+	}
 
 
 	/**
@@ -375,7 +404,8 @@ class AlfrescoService
 	 * @return ArrayList<AlfrescoObject>
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function search($query, $folderId=false, $recursive=false){// throws AlfrescoObjectNotFoundException {
+	public function search($query, $folderId = false, $recursive = false)
+	{ // throws AlfrescoObjectNotFoundException {
 		return $this->provider->search($query, $folderId, $recursive);
 	}
 
@@ -392,65 +422,74 @@ class AlfrescoService
 	 * @return ArrayList<AlfrescoObject>
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function searchByPath($query, $folderPath=false, $recursive=false){//	throws AlfrescoObjectNotFoundException {
+	public function searchByPath($query, $folderPath = false, $recursive = false)
+	{ //	throws AlfrescoObjectNotFoundException {
 		return $this->provider->searchByPath($query, $folderPath, $recursive);
-
 	}
 
 
 
 
-	public function getDownloadUrl($object){
+	public function getDownloadUrl($object)
+	{
 		return $this->provider->getDownloadUrl($object);
-    }
+	}
 
-    /*return the user download url of a file */
-    public function getViewUrl($object){
+	/*return the user download url of a file */
+	public function getViewUrl($object)
+	{
 		return $this->provider->getViewUrl($object);
-    }
+	}
 
 
-    public function getRepeatedPolicy() {
+	public function getRepeatedPolicy()
+	{
 		return $this->provider->getRepeatedPolicy();
-    }
+	}
 
 
-    public function setRepeatedPolicy($repeatedPolicy) {
+	public function setRepeatedPolicy($repeatedPolicy)
+	{
 		$this->provider->setRepeatedPolicy($repeatedPolicy);
-    }
+	}
 
-    public function setRepeatedRename() {
+	public function setRepeatedRename()
+	{
 		$this->provider->setRepeatedRename();
-    }
+	}
 
-    public function setRepeatedOverwrite() {
+	public function setRepeatedOverwrite()
+	{
 		$this->provider->setRepeatedOverwrite();
-    }
+	}
 
-    public function setRepeatedDeny() {
+	public function setRepeatedDeny()
+	{
 		$this->provider->setRepeatedDeny();
-    }
+	}
 
 
-    public function isRepeatedRename() {
+	public function isRepeatedRename()
+	{
 		return $this->provider->isRepeatedRename();
-    }
+	}
 
 
-    public function isRepeatedOverwrite() {
+	public function isRepeatedOverwrite()
+	{
 		return $this->provider->isRepeatedOverwrite();
-    }
+	}
 
-    public function isRepeatedDeny() {
+	public function isRepeatedDeny()
+	{
 		return $this->provider->isRepeatedDeny();
-    }
+	}
 
 
 
 
-	public function getPreview($id, $type="pdf"){
+	public function getPreview($id, $type = "pdf")
+	{
 		return $this->provider->getPreview($id, $type);
 	}
-
-
 }

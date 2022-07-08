@@ -29,12 +29,12 @@ use Exception;
 class AlfrescoCmisProvider
 {
 
-    const REPEATED_RENAME = "rename";
-    const REPEATED_OVERWRITE = "overwrite";
-    const REPEATED_DENY = "deny" ;
+	const REPEATED_RENAME = "rename";
+	const REPEATED_OVERWRITE = "overwrite";
+	const REPEATED_DENY = "deny";
 
-    const TYPE_FOLDER = "cmis:folder";
-    const TYPE_DOCUMENT = "cmis:document";
+	const TYPE_FOLDER = "cmis:folder";
+	const TYPE_DOCUMENT = "cmis:document";
 
 
 	protected $rootpath;
@@ -48,31 +48,33 @@ class AlfrescoCmisProvider
 	protected $reponame;
 	protected $session;
 	protected $debug;
+	protected $settings;
 
 
 
 
-	public function __construct($settings=false) {
+	public function __construct($settings = false)
+	{
 
-		if(!$settings){
-			$settings=config('alfresco');
-			$settings=to_object($settings);
+		if (!$settings) {
+			$settings = config('alfresco');
+			$settings = to_object($settings);
 		}
+		$this->settings = $settings;
+		$this->rootpath = $settings->base_path;
+		if (!ends_with($this->rootpath, "/")) $this->rootpath .= "/";
 
-		$this->rootpath=$settings->base_path;
-		if(!ends_with($this->rootpath,"/")) $this->rootpath.="/";
 
 
-
-		$this->basepath= "";
+		$this->basepath = "";
 
 		$this->alfrescourl = $settings->url;
-		if(!ends_with($this->alfrescourl,"/")) $this->alfrescourl.="/";
+		if (!ends_with($this->alfrescourl, "/")) $this->alfrescourl .= "/";
 
 		$this->apiuser = $settings->user;
 		$this->apipwd = $settings->pass;
 
-		$this->api= $settings->api;
+		$this->api = $settings->api;
 		$this->apiversion = $settings->api_version;
 
 		$this->repoId = $settings->repository_id;
@@ -83,7 +85,8 @@ class AlfrescoCmisProvider
 
 		$this->connect();
 	}
-	public function getRootPath(){
+	public function getRootPath()
+	{
 		return $this->rootpath;
 	}
 
@@ -92,22 +95,22 @@ class AlfrescoCmisProvider
 	 * throws AlfrescoConnectionException
 	 * throws AlfrescoObjectNotFoundException
 	 */
-	private function connect(){ // throws AlfrescoConnectionException {
-		try{
-			$apiurl=$this->generateApiUrl();
+	private function connect()
+	{ // throws AlfrescoConnectionException {
+		try {
+			$apiurl = $this->generateApiUrl();
 
-			if($this->debug) Log::debug("ALFRESCO: Connecting to CMIS API:" .$apiurl);
+			if ($this->debug) Log::debug("ALFRESCO: Connecting to CMIS API:" . $apiurl);
 
 			$this->session = new CmisService($apiurl, $this->apiuser, $this->apipwd);
 
-			$ret=$this->session->getObjectByPath($this->getBasepath(true));
+			$ret = $this->session->getObjectByPath($this->getBasepath(true));
 
-			if(!$ret){
+			if (!$ret) {
 				Log::error("Alfresco basepath not found");
 				throw new AlfrescoObjectNotFoundException(__("Alfresco basepath not found"));
 			}
-
-		}catch(CmisRuntimeException | CmisObjectNotFoundException $e){
+		} catch (CmisRuntimeException | CmisObjectNotFoundException $e) {
 			Log::error("Error connecting to Alfresco server");
 			Log::error($e->getMessage());
 			throw new AlfrescoConnectionException(__("Error connecting to Alfresco server"));
@@ -115,28 +118,27 @@ class AlfrescoCmisProvider
 	}
 
 
-	private function checkInBaseFolder($object){
+	private function checkInBaseFolder($object)
+	{
 
 		//_dump($object->path);
 		//_dump($this->getBasepath(true));
-		if(!starts_with($object->path, $this->getBasepath(true))){
+		if (!starts_with($object->path, $this->getBasepath(true))) {
 			return true;
-		}else {
-			throw new AlfrescoObjectNotFoundException(__("Object :name doesn't belong to the current site",["name"=>$object->id]));
+		} else {
+			throw new AlfrescoObjectNotFoundException(__("Object :name doesn't belong to the current site", ["name" => $object->id]));
 		}
-
-
-
 	}
 
 
 
-/**
+	/**
 	 * Retorna el directori arrel des del qual s'executaran els altres mètodes
 	 * @return String
 	 */
-	public function getBasepath($full=false){
-		return ($full?($this->rootpath):"") . $this->basepath;
+	public function getBasepath($full = false)
+	{
+		return ($full ? ($this->rootpath) : "") . $this->basepath;
 	}
 
 
@@ -144,9 +146,10 @@ class AlfrescoCmisProvider
 	 * Defineix el directori arrel des del qual s'executaran els altres mètodes.
 	 * @param basepath
 	 */
-	public function setBasepath($path){
-		$this->basepath=$path;
-		if(!ends_with($this->basepath,"/")) $this->basepath.="/";
+	public function setBasepath($path)
+	{
+		$this->basepath = $path;
+		if (!ends_with($this->basepath, "/")) $this->basepath .= "/";
 	}
 
 
@@ -154,7 +157,8 @@ class AlfrescoCmisProvider
 	 * Genera la URL del servei CMIS d'Alfresco
 	 * @return
 	 */
-	private function generateApiUrl() {
+	private function generateApiUrl()
+	{
 		// return $this->alfrescourl."api/".$this->repoId . "/public/cmis/versions/". $this->apiversion. "/atom";
 		return $this->alfrescourl;
 	}
@@ -167,18 +171,18 @@ class AlfrescoCmisProvider
 	 * @return
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getBaseFolder(){ // throws AlfrescoObjectNotFoundException{
+	public function getBaseFolder()
+	{ // throws AlfrescoObjectNotFoundException{
 
-		try{
-			if(!$this->basepath)
-				$obj=$this->session->getObjectByPath($this->rootpath);
+		try {
+			if (!$this->basepath)
+				$obj = $this->session->getObjectByPath($this->rootpath);
 			else
-				$obj=$this->session->getObjectByPath($this->getBasepath(true));
+				$obj = $this->session->getObjectByPath($this->getBasepath(true));
 
 			return $this->fromCmisObject($obj);
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Folder [:name] not found in Alfresco", ["name"=>$this->basepath]) );
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Folder [:name] not found in Alfresco", ["name" => $this->basepath]));
 		}
 	}
 
@@ -189,55 +193,58 @@ class AlfrescoCmisProvider
 	 * @param o
 	 * @return
 	 */
-	protected function fromCmisObject($o){
+	protected function fromCmisObject($o)
+	{
 		//dump($o);
-		$obj=new AlfrescoCmisObject($o);
+		$obj = new AlfrescoCmisObject($o);
 		//dd($obj);
 		//dd($obj->type);
 		//System.out.println("["+ o.getName() + "] which is of type: " + type.getId()+"-"+type.getDisplayName());
-		if($obj->type == self::TYPE_DOCUMENT || $obj->type=="D:cm:thumbnail"){
+		if ($obj->type == self::TYPE_DOCUMENT || $obj->type == "D:cm:thumbnail") {
 
-			return AlfrescoDocument::fromCmisDocument($obj, $this) ;
-		}else if($obj->type == self::TYPE_FOLDER || $obj->type == "F:st:sites"  || $obj->type =="F:st:site" ){
+			return AlfrescoDocument::fromCmisDocument($obj, $this);
+		} else if ($obj->type == self::TYPE_FOLDER || $obj->type == "F:st:sites"  || $obj->type == "F:st:site") {
 			//dd($obj);
 			return AlfrescoFolder::fromCmisFolder($obj, $this);
-		}else return null;
+		} else return null;
 	}
 
 
-	protected function fromCmisObjects($objects){
-		$ret=array();
-		if($objects){
-			foreach($objects as $object){
-				$ret[]=$this->fromCmisObject($object);
+	protected function fromCmisObjects($objects)
+	{
+		$ret = array();
+		if ($objects) {
+			foreach ($objects as $object) {
+				$ret[] = $this->fromCmisObject($object);
 			}
 		}
 		return $ret;
-
 	}
 
 
 
 
 
-	public function exists($objectId){
-		try{
+	public function exists($objectId)
+	{
+		try {
 			$this->getObject($objectId);
 			return true;
-		}catch(AlfrescoObjectNotFoundException $e){
+		} catch (AlfrescoObjectNotFoundException $e) {
 			return false;
 		}
 	}
 
 
-    public function existsPath($objectPath){
-		try{
+	public function existsPath($objectPath)
+	{
+		try {
 			$this->getObjectByPath($objectPath);
 			return true;
-		}catch(AlfrescoObjectNotFoundException $e){
+		} catch (AlfrescoObjectNotFoundException $e) {
 			return false;
 		}
-    }
+	}
 
 
 
@@ -249,20 +256,19 @@ class AlfrescoCmisProvider
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getObject($objectId){
+	public function getObject($objectId)
+	{
 
-		try{
-			$tmp= $this->session->getObject($objectId);
+		try {
+			$tmp = $this->session->getObject($objectId);
 			//dd($tmp);
-			$ret=$this->fromCmisObject($tmp);
+			$ret = $this->fromCmisObject($tmp);
 
 			$this->checkInBaseFolder($ret);
 
 			return $ret;
-
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Object ID [:name] not found in Alfresco",["name"=>$objectId]));
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Object ID [:name] not found in Alfresco", ["name" => $objectId]));
 		}
 	}
 
@@ -273,47 +279,47 @@ class AlfrescoCmisProvider
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getObjectByPath($objectPath){
-		try{
-			$objectPath=ltrim($objectPath, '/');
+	public function getObjectByPath($objectPath)
+	{
+		try {
+			$objectPath = ltrim($objectPath, '/');
 			//dd($objectPath);
 
 
-			$thepath=$this->getBasepath(true).$objectPath;
-			$thepath=urlencode($thepath);
+			$thepath = $this->getBasepath(true) . $objectPath;
+			$thepath = urlencode($thepath);
 			//dump($thepath);
-			if($thepath == ""){
+			if ($thepath == "") {
 				$cmisobject = $this->session->getObjectByPath($this->rootpath);
-			}else{
-				$cmisobject=$this->session->getObjectByPath($thepath);
+			} else {
+				$cmisobject = $this->session->getObjectByPath($thepath);
 				// dd($cmisobject);
 			}
 			//_dump($cmisfolder);
 
-			$ret=$this->fromCmisObject($cmisobject);
+			$ret = $this->fromCmisObject($cmisobject);
 			return $ret;
-
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Object Path [:name] not found in Alfresco",["name"=>$objectPath]));
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Object Path [:name] not found in Alfresco", ["name" => $objectPath]));
 		}
 	}
 
 
 
-	private function scandirRecursive($descendants){
+	private function scandirRecursive($descendants)
+	{
 
-		$objects=$descendants->objectList;
-		$ret=array();
-		foreach($objects as $obj){
-			$okobj=$this->fromCmisObject($obj);
-			if($okobj?->isFolder()){
+		$objects = $descendants->objectList;
+		$ret = array();
+		foreach ($objects as $obj) {
+			$okobj = $this->fromCmisObject($obj);
+			if ($okobj?->isFolder()) {
 
-				if(isset($obj->children)){
-					$ret=array_merge($ret,$this->scandirRecursive($obj->children));
+				if (isset($obj->children)) {
+					$ret = array_merge($ret, $this->scandirRecursive($obj->children));
 				}
-			}else{
-				$ret[]=$okobj;
+			} else {
+				$ret[] = $okobj;
 			}
 		}
 		return $ret;
@@ -326,39 +332,38 @@ class AlfrescoCmisProvider
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function downloadObject($objectId, $stream=false, $pathFile=''){
-		$obj=$this->getObject($objectId);
+	public function downloadObject($objectId, $stream = false, $pathFile = '')
+	{
+		$obj = $this->getObject($objectId);
 
-		if($obj->isDocument()){
-			$doc= $this->getDocumentContent($objectId);
+		if ($obj->isDocument()) {
+			$doc = $this->getDocumentContent($objectId);
 			AlfrescoHelper::download($doc, $obj->name, $obj->mimetype, $obj->size, $stream);
+		} else {
+			$descendants = $this->session->getDescendants($obj->id, -1);
 
-		}else{
-			$descendants=$this->session->getDescendants($obj->id,-1);
-
-			if($descendants){
+			if ($descendants) {
 				//$descendants= $this->fromCmisObjects($descendants->objectList);
 				//_dump($descendants);
-				$archives=$this->scandirRecursive($descendants);
+				$archives = $this->scandirRecursive($descendants);
 
 				$zip = new TbsZip(); // instantiate the class
 				$zip->CreateNew(); // create a virtual new zip archive
 
-				if($archives){
-					foreach($archives as $archive){
-						$archivepath=str_replace($obj->path."/","",$archive->path);
+				if ($archives) {
+					foreach ($archives as $archive) {
+						$archivepath = str_replace($obj->path . "/", "", $archive->path);
 						//_dump($archivepath);
-						$content=$this->session->getContentStream($archive->id);
+						$content = $this->session->getContentStream($archive->id);
 						$zip->FileAdd($archivepath, $content, TbsZip::TBSZIP_STRING);
 					}
 					// flush the result as an HTTP download
 				}
 				// $zip->Flush(TbsZip::TBSZIP_DOWNLOAD, $obj->name.".zip");
-                $path = !empty($pathFile) ? $pathFile : $obj->name.".zip";
+				$path = !empty($pathFile) ? $pathFile : $obj->name . ".zip";
 				$zip->Flush(TbsZip::TBSZIP_FILE, $path);
 				exit;
 			}
-
 		}
 	}
 
@@ -370,24 +375,24 @@ class AlfrescoCmisProvider
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getFolder($folderId){// throws AlfrescoObjectNotFoundException {
+	public function getFolder($folderId)
+	{ // throws AlfrescoObjectNotFoundException {
 		//RepositoryLog.debug("ALFRESCO: getFolder("+folderId+")");
-		try{
-			$tmp= $this->session->getObject($folderId);
+		try {
+			$tmp = $this->session->getObject($folderId);
 			//dd($tmp);
 			//die();
-			$ret=$this->fromCmisObject($tmp);
+			$ret = $this->fromCmisObject($tmp);
 
 			$this->checkInBaseFolder($ret);
 
-			if($ret->isFolder()){
+			if ($ret->isFolder()) {
 				return $ret;
-			}else{
-				throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco",array("name"=>$folderId)));
+			} else {
+				throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco", array("name" => $folderId)));
 			}
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco",array("name"=>$folderId)));
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco", array("name" => $folderId)));
 		}
 	}
 
@@ -399,22 +404,21 @@ class AlfrescoCmisProvider
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getFolderByPath($folderPath){// throws AlfrescoObjectNotFoundException {
-		try{
-			if($folderPath=="") return $this->getBaseFolder();
+	public function getFolderByPath($folderPath)
+	{ // throws AlfrescoObjectNotFoundException {
+		try {
+			if ($folderPath == "") return $this->getBaseFolder();
 
-			$ret=$this->getObjectByPath($folderPath);
+			$ret = $this->getObjectByPath($folderPath);
 
-			if($ret->isFolder()){
+			if ($ret->isFolder()) {
 				return $ret;
-			}else{
-				throw new AlfrescoObjectNotFoundException(__("Folder path [:name] not found in Alfresco",array("name"=>$folderPath)));
+			} else {
+				throw new AlfrescoObjectNotFoundException(__("Folder path [:name] not found in Alfresco", array("name" => $folderPath)));
 			}
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Folder path [:name] not found in Alfresco",array("name"=>$folderPath)));
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Folder path [:name] not found in Alfresco", array("name" => $folderPath)));
 		}
-
 	}
 
 
@@ -424,24 +428,26 @@ class AlfrescoCmisProvider
 	 * @return AlfrescoFolder
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	 public function getParent($objectId){// throws AlfrescoObjectNotFoundException {
-		try{
+	public function getParent($objectId)
+	{ // throws AlfrescoObjectNotFoundException {
+		try {
 			//_dump("getParent");
 			//_dump($objectId);
-			$parent=$this->session->getFolderParent($objectId);
+			$parent = $this->session->getFolderParent($objectId);
 			//_dump($parent);
-			if($parent) return $this->fromCmisObject($parent);
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco",array("name"=>$folderId)));
+			if ($parent) return $this->fromCmisObject($parent);
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco", array("name" => $folderId)));
 		}
 	}
 
 
-	public function getFolders($folderId){
+	public function getFolders($folderId)
+	{
 		return $this->getChildren($folderId, self::TYPE_FOLDER);
 	}
-	public function getDocuments($folderId){
+	public function getDocuments($folderId)
+	{
 		return $this->getChildren($folderId, self::TYPE_DOCUMENT);
 	}
 
@@ -451,53 +457,54 @@ class AlfrescoCmisProvider
 	 * @return AlfrescoFolder[]
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getChildren($folderId, $objectType=false){
+	public function getChildren($folderId, $objectType = false)
+	{
 		// throws AlfrescoObjectNotFoundException {
-		try{
-			$children=$this->session->getChildren($folderId);
+		try {
+			$children = $this->session->getChildren($folderId);
 			//dump($children);
-			$ret=array();
-			if($children){
-				foreach($children->objectList as $obj){
+			$ret = array();
+			if ($children) {
+				foreach ($children->objectList as $obj) {
 
 					$child = $this->fromCmisObject($obj);
 
-					if($child){
-						if($objectType){
-							if($objectType==$child->type) $ret[]=$child;
-						}else{
-							$ret[]=$child;
+					if ($child) {
+						if ($objectType) {
+							if ($objectType == $child->type) $ret[] = $child;
+						} else {
+							$ret[] = $child;
 						}
 					}
 				}
 			}
 			return $ret;
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco",array("name"=>$folderId)));
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco", array("name" => $folderId)));
 		}
 	}
 
-    public function getDescendants($folderId, $depth=-1, $options = array ())
-    {
-        $descendants =  $this->session->getDescendants($folderId, $depth, $options);
-        if($descendants)
-            return $this->scandirRecursive($descendants);
+	public function getDescendants($folderId, $depth = -1, $options = array())
+	{
+		$descendants =  $this->session->getDescendants($folderId, $depth, $options);
+		if ($descendants)
+			return $this->scandirRecursive($descendants);
 
-        return null;
-    }
+		return null;
+	}
 
-    /**
+	/**
 	 * Retorna els fills d'una carpeta d'Alfresco passant el seu ID
 	 * @param folderId
 	 * @return AlfrescoFolder[]
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getFolderTree($folderId){
+	public function getFolderTree($folderId)
+	{
 		// throws AlfrescoObjectNotFoundException {
-		try{
-			$tree=$this->session->getFolderTree($folderId, -1);
-            // $children=$this->session->getChildren($folderId);
+		try {
+			$tree = $this->session->getFolderTree($folderId, -1);
+			// $children=$this->session->getChildren($folderId);
 			//dump($children);
 			// $ret=array();
 			// if($children){
@@ -511,9 +518,8 @@ class AlfrescoCmisProvider
 			// 	}
 			// }
 			return $tree;
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco",array("name"=>$folderId)));
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco", array("name" => $folderId)));
 		}
 	}
 
@@ -527,48 +533,46 @@ class AlfrescoCmisProvider
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	private function doCreateFolder($folderName, $parentfolder){
+	private function doCreateFolder($folderName, $parentfolder)
+	{
 		// throws AlfrescoObjectNotFoundException, AlfrescoObjectAlreadyExistsException{
 
 		//$folderName=AlfrescoHelper::sanitizeName($folderName);
 
-		try{
+		try {
 			//dd("ALFRESCO: createFolder(".$folderName.") in folder " . $parentfolder->id);
 
-    		if(str_contains($folderName,"/")){
-    			//si tiene subdirectorios
+			if (str_contains($folderName, "/")) {
+				//si tiene subdirectorios
 
-    			$path=explode("/", $folderName);
-    			$partpath="";
-    			foreach($path as $part){
-    				$partpath.="/".$part;
-    				//dump($partpath);
-					try{
-    					$parentfolder=$this->getFolderByPath($partpath);
-    				}catch(AlfrescoObjectNotFoundException $e){
-    					//dd($e);
-    					$parentfolder=$this->doCreateFolder($part, $parentfolder);
-    				}
-    			}
-    			return $parentfolder;
-    		}else{
-				$ret=$this->session->createFolder($parentfolder->id, $folderName);
+				$path = explode("/", $folderName);
+				$partpath = "";
+				foreach ($path as $part) {
+					$partpath .= "/" . $part;
+					//dump($partpath);
+					try {
+						$parentfolder = $this->getFolderByPath($partpath);
+					} catch (AlfrescoObjectNotFoundException $e) {
+						//dd($e);
+						$parentfolder = $this->doCreateFolder($part, $parentfolder);
+					}
+				}
+				return $parentfolder;
+			} else {
+				$ret = $this->session->createFolder($parentfolder->id, $folderName);
 
 				return $this->fromCmisObject($ret);
 			}
-
-		}catch(CmisRuntimeException | CmisInvalidArgumentException | CmisRuntimeException $e ){
+		} catch (CmisRuntimeException | CmisInvalidArgumentException | CmisRuntimeException $e) {
 			//return $this->doCreateFolder(AlfrescoHelper::sanitizeName($folderName), $parentfolder);
 			//dd(AlfrescoHelper::sanitizeName($folderName));
-			$ret=$this->session->createFolder($parentfolder->id, AlfrescoHelper::sanitizeName($folderName));
+			$ret = $this->session->createFolder($parentfolder->id, AlfrescoHelper::sanitizeName($folderName));
 			return $this->fromCmisObject($ret);
-
-		}catch(CmisConstraintException | CmisContentAlreadyExistsException $e){
-			throw new AlfrescoObjectAlreadyExistsException(__("Folder ':name' already exists in folder ':path' in Alfresco ",array("name"=>$folderName, "path"=>$parentfolder->path)));
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Folder path ':name' not found in Alfresco",array("name"=>$parentfolder->path)));
+		} catch (CmisConstraintException | CmisContentAlreadyExistsException $e) {
+			throw new AlfrescoObjectAlreadyExistsException(__("Folder ':name' already exists in folder ':path' in Alfresco ", array("name" => $folderName, "path" => $parentfolder->path)));
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Folder path ':name' not found in Alfresco", array("name" => $parentfolder->path)));
 		}
-
 	}
 
 
@@ -582,17 +586,17 @@ class AlfrescoCmisProvider
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function createFolder($folderName, $parentId=false){
-	// throws AlfrescoObjectNotFoundException,AlfrescoObjectAlreadyExistsException {
-		if(!$parentId){
+	public function createFolder($folderName, $parentId = false)
+	{
+		// throws AlfrescoObjectNotFoundException,AlfrescoObjectAlreadyExistsException {
+		if (!$parentId) {
 			$parentFolder = $this->getBaseFolder();
-		}else{
+		} else {
 			$parentFolder = $this->getFolder($parentId);
 		}
 
-		if($parentFolder)
-			return $this->doCreateFolder($folderName,$parentFolder);
-
+		if ($parentFolder)
+			return $this->doCreateFolder($folderName, $parentFolder);
 	}
 
 
@@ -604,18 +608,18 @@ class AlfrescoCmisProvider
 	 * @return AlfrescoDocument
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getDocument($documentId){//	throws AlfrescoObjectNotFoundException {
-		try{
-			$tmp= $this->session->getObject($documentId);
-			$ret=$this->fromCmisObject($tmp);
-			if($ret->isDocument()){
+	public function getDocument($documentId)
+	{ //	throws AlfrescoObjectNotFoundException {
+		try {
+			$tmp = $this->session->getObject($documentId);
+			$ret = $this->fromCmisObject($tmp);
+			if ($ret->isDocument()) {
 				return $ret;
-			}else{
-				throw new AlfrescoObjectNotFoundException(__("Document ID [:name] not found in Alfresco",array("name"=>$documentId)));
+			} else {
+				throw new AlfrescoObjectNotFoundException(__("Document ID [:name] not found in Alfresco", array("name" => $documentId)));
 			}
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Document ID [:name] not found in Alfresco", array("name"=>$documentId)));
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Document ID [:name] not found in Alfresco", array("name" => $documentId)));
 		}
 	}
 
@@ -628,40 +632,38 @@ class AlfrescoCmisProvider
 	 * @return AlfrescoDocument
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function getDocumentByPath($documentPath){// throws AlfrescoObjectNotFoundException {
+	public function getDocumentByPath($documentPath)
+	{ // throws AlfrescoObjectNotFoundException {
 
-		try{
-			$ret=$this->getObjectByPath($documentPath);
+		try {
+			$ret = $this->getObjectByPath($documentPath);
 
-			if($ret->isDocument()){
+			if ($ret->isDocument()) {
 				return $ret;
-			}else{
-				throw new AlfrescoObjectNotFoundException(__("Document path [:name] not found in Alfresco",array("name"=>$documentPath)));
+			} else {
+				throw new AlfrescoObjectNotFoundException(__("Document path [:name] not found in Alfresco", array("name" => $documentPath)));
 			}
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Document path [:name] not found in Alfresco",array("name"=>$documentPath)));
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Document path [:name] not found in Alfresco", array("name" => $documentPath)));
 		}
-
-
 	}
 
 
-	public function getDocumentContent($documentId){
-		try{
-			$tmp= $this->session->getObject($documentId);
+	public function getDocumentContent($documentId)
+	{
+		try {
+			$tmp = $this->session->getObject($documentId);
 
-			$ret=$this->fromCmisObject($tmp);
+			$ret = $this->fromCmisObject($tmp);
 
-			if($ret->isDocument()){
-				$contents=$this->session->getContentStream($documentId);
+			if ($ret->isDocument()) {
+				$contents = $this->session->getContentStream($documentId);
 				return $contents;
-			}else{
-				throw new AlfrescoObjectNotFoundException(__("Document ID [:name] not found in Alfresco",array("name"=>$documentId)));
+			} else {
+				throw new AlfrescoObjectNotFoundException(__("Document ID [:name] not found in Alfresco", array("name" => $documentId)));
 			}
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Document ID [:name] not found in Alfresco", array("name"=>$documentId)));
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Document ID [:name] not found in Alfresco", array("name" => $documentId)));
 		}
 	}
 
@@ -671,7 +673,8 @@ class AlfrescoCmisProvider
 	 * @param qs
 	 * @return
 	 */
-	private function manageDocumentQuery($qs) {
+	private function manageDocumentQuery($qs)
+	{
 		/*RepositoryLog.debug(qs.toString());
 
 		ArrayList<RepositoryDocument> ret= new ArrayList<RepositoryDocument>();
@@ -686,7 +689,6 @@ class AlfrescoCmisProvider
 		}
 
 		return ret;*/
-
 	}
 
 
@@ -697,24 +699,24 @@ class AlfrescoCmisProvider
 	 * @param objectId
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function delete($objectId){// throws AlfrescoObjectNotFoundException {
-		$cmisobject= $this->session->getObject($objectId);
-		$obj=$this->fromCmisObject($cmisobject);
-		try{
+	public function delete($objectId)
+	{ // throws AlfrescoObjectNotFoundException {
+		$cmisobject = $this->session->getObject($objectId);
+		$obj = $this->fromCmisObject($cmisobject);
+		try {
 
-			if($obj->isDocument()){
+			if ($obj->isDocument()) {
 				//dd($obj->id);
-				$ret=$this->session->deleteObject($obj->id);
-				return $ret==false;
-			}else{
-				$ret=$this->session->deleteTree($obj->id);
-				return $ret->numItems==-1;
+				$ret = $this->session->deleteObject($obj->id);
+				return $ret == false;
+			} else {
+				$ret = $this->session->deleteTree($obj->id);
+				return $ret->numItems == -1;
 			}
-		}catch(CmisPermissionDeniedException |CmisRuntimeException $e){
+		} catch (CmisPermissionDeniedException | CmisRuntimeException $e) {
 			dd($e);
 			return false;
 		}
-
 	}
 
 
@@ -726,69 +728,63 @@ class AlfrescoCmisProvider
 	 * @param folderId
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function copy($objectId, $folderId){// throws AlfrescoObjectNotFoundException, AlfrescoObjectAlreadyExistsException {
-		try{
-			$cmisobject= $this->session->getObject($objectId);
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Object ID [:name] not found in Alfresco", array("name"=>$objectId)));
+	public function copy($objectId, $folderId)
+	{ // throws AlfrescoObjectNotFoundException, AlfrescoObjectAlreadyExistsException {
+		try {
+			$cmisobject = $this->session->getObject($objectId);
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Object ID [:name] not found in Alfresco", array("name" => $objectId)));
 		}
 
-		try{
-			$cmisfolder=$this->session->getObject($folderId);
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco", array("name"=>$folderId)));
+		try {
+			$cmisfolder = $this->session->getObject($folderId);
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco", array("name" => $folderId)));
 		}
 
 
-		$obj=$this->fromCmisObject($cmisobject);
+		$obj = $this->fromCmisObject($cmisobject);
 
-		$target=$this->fromCmisObject($cmisfolder);
+		$target = $this->fromCmisObject($cmisfolder);
 
 
-		if($target->isFolder()){
+		if ($target->isFolder()) {
 
 			//_dump("Copying :".$obj->path ." to folder ".$target->path);
 
-			if($obj->isDocument()){
-				$contents=$this->session->getContentStream($obj->id);
+			if ($obj->isDocument()) {
+				$contents = $this->session->getContentStream($obj->id);
 
-				$properties=$this->session->getPropertiesOfLatestVersion($obj->id);
+				$properties = $this->session->getPropertiesOfLatestVersion($obj->id);
 
-				try{
-					$ret=$this->session->createDocument($target->id, $obj->name, $properties, $contents, trim($obj->mimetype));
+				try {
+					$ret = $this->session->createDocument($target->id, $obj->name, $properties, $contents, trim($obj->mimetype));
 					return $this->fromCmisObject($ret);
-
-				}catch(Exception $e){
-					throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name"=>$obj->name,"path"=>$target->fullpath)));
+				} catch (Exception $e) {
+					throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name" => $obj->name, "path" => $target->fullpath)));
 				}
-			}else{
+			} else {
 				//create folder and copy contents
-				try{
-					$parent=$this->createFolder($obj->name,$target->id);
-
-				}catch(Exception $e){
-					throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name"=>$obj->name, "path"=>$target->fullpath)));
+				try {
+					$parent = $this->createFolder($obj->name, $target->id);
+				} catch (Exception $e) {
+					throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name" => $obj->name, "path" => $target->fullpath)));
 				}
 
 
-				$children=$this->getChildren($obj->id);
+				$children = $this->getChildren($obj->id);
 				//_dump($children);
 				//die();
-				if($children){
-					foreach($children as $child){
-						$this->copy($child->id,$parent->id);
+				if ($children) {
+					foreach ($children as $child) {
+						$this->copy($child->id, $parent->id);
 					}
 				}
 				return $parent;
-
 			}
-
-		}else{
-			throw new AlfrescoObjectNotFoundException(__("Target ID [:name] is not a folder", array("name"=>$folderId)));
+		} else {
+			throw new AlfrescoObjectNotFoundException(__("Target ID [:name] is not a folder", array("name" => $folderId)));
 		}
-
-
 	}
 
 
@@ -800,11 +796,12 @@ class AlfrescoCmisProvider
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function copyByPath($objectId, $folderPath){
-		$folder=$this->getFolderByPath($folderPath);
+	public function copyByPath($objectId, $folderPath)
+	{
+		$folder = $this->getFolderByPath($folderPath);
 
-		if($folder){
-			return $this->copy($objectId,$folder->id);
+		if ($folder) {
+			return $this->copy($objectId, $folder->id);
 		}
 	}
 
@@ -820,38 +817,38 @@ class AlfrescoCmisProvider
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function move($objectId, $folderId){// throws AlfrescoObjectNotFoundException, AlfrescoObjectAlreadyExistsException {
-		try{
-			$cmisobject= $this->session->getObject($objectId);
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Object ID [:name] not found in Alfresco", array("name"=>$objectId)));
+	public function move($objectId, $folderId)
+	{ // throws AlfrescoObjectNotFoundException, AlfrescoObjectAlreadyExistsException {
+		try {
+			$cmisobject = $this->session->getObject($objectId);
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Object ID [:name] not found in Alfresco", array("name" => $objectId)));
 		}
 
-		try{
-			$cmisfolder=$this->session->getObject($folderId);
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco", array("name"=>$folderId)));
+		try {
+			$cmisfolder = $this->session->getObject($folderId);
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco", array("name" => $folderId)));
 		}
 
-		$obj=$this->fromCmisObject($cmisobject);
+		$obj = $this->fromCmisObject($cmisobject);
 
-		$target=$this->fromCmisObject($cmisfolder);
+		$target = $this->fromCmisObject($cmisfolder);
 
 
 		//_dump($obj);
 
-		if($target->isFolder()){
-			$origin=$obj->getParent();
+		if ($target->isFolder()) {
+			$origin = $obj->getParent();
 
 			//_dump("Moving :".$obj->path ." to folder ".$target->path);
 			//_dump($origin);
 
-			try{
-				$ret=$this->session->moveObject($obj->id, $target->id, $origin->id);
+			try {
+				$ret = $this->session->moveObject($obj->id, $target->id, $origin->id);
 				return $this->fromCmisObject($ret);
-			}catch(Exception $e){
-				throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name"=>$obj->name,"path"=>$target->path)));
+			} catch (Exception $e) {
+				throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name" => $obj->name, "path" => $target->path)));
 			}
 		}
 
@@ -868,10 +865,11 @@ class AlfrescoCmisProvider
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function moveByPath($objectId, $folderPath){
-		$folder=$this->getFolderByPath($folderPath);
-		if($folder){
-			return $this->move($objectId,$folder->id);
+	public function moveByPath($objectId, $folderPath)
+	{
+		$folder = $this->getFolderByPath($folderPath);
+		if ($folder) {
+			return $this->move($objectId, $folder->id);
 		}
 	}
 
@@ -886,112 +884,103 @@ class AlfrescoCmisProvider
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function rename($objectId, $newName){// throws AlfrescoObjectNotFoundException, AlfrescoObjectAlreadyExistsException{
+	public function rename($objectId, $newName)
+	{ // throws AlfrescoObjectNotFoundException, AlfrescoObjectAlreadyExistsException{
 
-		$newName=AlfrescoHelper::sanitizeName($newName);
+		$newName = AlfrescoHelper::sanitizeName($newName);
 
-		try{
-			$cmisobject= $this->session->getObject($objectId);
-			$obj=$this->fromCmisObject($cmisobject);
+		try {
+			$cmisobject = $this->session->getObject($objectId);
+			$obj = $this->fromCmisObject($cmisobject);
 
-			if($obj->name==$newName) return $obj;
+			if ($obj->name == $newName) return $obj;
 
-			$target=$obj->getParent();
+			$target = $obj->getParent();
 
-			if($obj->isDocument()){
-				if(!ends_with($newName,".".$obj->extension)) $newName.=".".$obj->extension;
+			if ($obj->isDocument()) {
+				if (!ends_with($newName, "." . $obj->extension)) $newName .= "." . $obj->extension;
 
-				$contents=$this->session->getContentStream($obj->id);
+				$contents = $this->session->getContentStream($obj->id);
 
-				$properties=$this->session->getPropertiesOfLatestVersion($obj->id);
+				$properties = $this->session->getPropertiesOfLatestVersion($obj->id);
 				//_dump("Renaming from:".$obj->name ." to ". $newName );
 
-				try{
-					$ret=$this->session->createDocument($target->id, $newName, $properties, $contents, trim($obj->mimetype));
+				try {
+					$ret = $this->session->createDocument($target->id, $newName, $properties, $contents, trim($obj->mimetype));
 					$this->delete($objectId);
 					return $this->fromCmisObject($ret);
-				}catch(Exception $e){
-					throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name"=>$obj->name,"path"=>$target->fullpath)));
+				} catch (Exception $e) {
+					throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name" => $obj->name, "path" => $target->fullpath)));
 				}
-
-
-			}else{
+			} else {
 				//Create folder and move contents
-				try{
-					$parent=$this->createFolder($newName,$target->id);
-				}catch(Exception $e){
-					throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name"=>$newName, "path"=>$target->fullpath)));
+				try {
+					$parent = $this->createFolder($newName, $target->id);
+				} catch (Exception $e) {
+					throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name" => $newName, "path" => $target->fullpath)));
 				}
-				$children=$this->getChildren($obj->id);
-				if($children){
-					foreach($children as $child){
+				$children = $this->getChildren($obj->id);
+				if ($children) {
+					foreach ($children as $child) {
 						$child->moveTo($parent->id);
 					}
 				}
 				//remove original folder
 				$this->delete($obj->id);
 				return $parent;
-
 			}
-
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Object ID ':name' not found in Alfresco",array("name"=>$objectId)));
-		}catch(CmisContentAlreadyExistsException $e){
-			throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in the same folder in Alfresco",array("name"=>$newName)));
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Object ID ':name' not found in Alfresco", array("name" => $objectId)));
+		} catch (CmisContentAlreadyExistsException $e) {
+			throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in the same folder in Alfresco", array("name" => $newName)));
 		}
 	}
 
 
-	private function doCreateDocument($parentId, $filename, $filecontent, $filetype=false, $index=0){
+	private function doCreateDocument($parentId, $filename, $filecontent, $filetype = false, $index = 0)
+	{
 
 		//_dump($filename);
-		$filename=AlfrescoHelper::sanitizeName($filename);
+		$filename = AlfrescoHelper::sanitizeName($filename);
 		//_dump($filename);
 		//die();
 
-		try{
-			$cmisfolder=$this->session->getObject($parentId);
-
-		}catch(CmisObjectNotFoundException $e){
-			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco", array("name"=>$parentId)));
+		try {
+			$cmisfolder = $this->session->getObject($parentId);
+		} catch (CmisObjectNotFoundException $e) {
+			throw new AlfrescoObjectNotFoundException(__("Folder ID [:name] not found in Alfresco", array("name" => $parentId)));
 		}
 
-		$folder=$this->fromCmisObject($cmisfolder);
+		$folder = $this->fromCmisObject($cmisfolder);
 
-		if($folder->isFolder()){
-			try{
+		if ($folder->isFolder()) {
+			try {
 
 
 				//_dump("creating file '".$filename."' in folder ".$folder->id);
 
-				$file=$this->session->createDocument($folder->id, $filename, false, $filecontent, trim($filetype));
+				$file = $this->session->createDocument($folder->id, $filename, false, $filecontent, trim($filetype));
 				//_dump($file);
-				$obj=$this->fromCmisObject($file);
+				$obj = $this->fromCmisObject($file);
 
 				return $obj;
-			}catch(Exception $e){
+			} catch (Exception $e) {
 				//si ya existe y la politica es rename
-				if($this->isRepeatedRename()){
+				if ($this->isRepeatedRename()) {
 					//_dump($filename);
-					$newname=AlfrescoHelper::generateNewName($filename,$index);
-					return $this->doCreateDocument($parentId, $newname, $filecontent, $filetype, ($index+1));
-
-				}else if($this->isRepeatedOverwrite()){
+					$newname = AlfrescoHelper::generateNewName($filename, $index);
+					return $this->doCreateDocument($parentId, $newname, $filecontent, $filetype, ($index + 1));
+				} else if ($this->isRepeatedOverwrite()) {
 					//delete original
-					$obj=$this->getObjectByPath($folder->path."/".$filename);
+					$obj = $this->getObjectByPath($folder->path . "/" . $filename);
 					$obj->delete();
 					$this->doCreateDocument($parentId, $filename, $filecontent, $filetype);
-
-				}else{
-					throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name"=>$filename,"path"=>$folder->path)));
-
+				} else {
+					throw new AlfrescoObjectAlreadyExistsException(__("Object with name ':name' already exists in folder :path in Alfresco", array("name" => $filename, "path" => $folder->path)));
 				}
 			}
-
-
-		}else{
-			throw new AlfrescoObjectNotFoundException(__("Folder [:name] doesn't exist in Alfresco",array("name"=>$folder->id)));
+		} else {
+			throw new AlfrescoObjectNotFoundException(__("Folder [:name] doesn't exist in Alfresco", array("name" => $folder->id)));
 		}
 		return false;
 	}
@@ -1004,9 +993,9 @@ class AlfrescoCmisProvider
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function createDocument($parentId, $filename, $filecontent, $filetype=false){
+	public function createDocument($parentId, $filename, $filecontent, $filetype = false)
+	{
 		return $this->doCreateDocument($parentId, $filename, $filecontent, $filetype);
-
 	}
 
 
@@ -1018,63 +1007,65 @@ class AlfrescoCmisProvider
 	 * @throws AlfrescoObjectNotFoundException
 	 * @throws AlfrescoObjectAlreadyExistsException
 	 */
-	public function createDocumentByPath($parentPath, $filename, $filecontent, $filetype=false){
-		$folder=$this->getFolderByPath($parentPath);
-		if($folder){
+	public function createDocumentByPath($parentPath, $filename, $filecontent, $filetype = false)
+	{
+		$folder = $this->getFolderByPath($parentPath);
+		if ($folder) {
 			return $this->doCreateDocument($folder->id, $filename, $filecontent, $filetype);
 		}
 	}
 
 
-	protected function doUpload($parentId, $document){
-		$error=false;
-		if($document instanceof UploadedFile){
-			$filename=$document->getClientOriginalName();
+	protected function doUpload($parentId, $document)
+	{
+		$error = false;
+		if ($document instanceof UploadedFile) {
+			$filename = $document->getClientOriginalName();
 
-			if(!$error=$document->getError()){
-				$filecontent=file_get_contents($document->getRealPath());
-				$filetype=$document->getMimeType();
+			if (!$error = $document->getError()) {
+				$filecontent = file_get_contents($document->getRealPath());
+				$filetype = $document->getMimeType();
 			}
-		}else{
-			$filename=$doc["name"];
-			$filecontent=file_get_contents($doc["tmp_name"]);
-			$filetype=mime_content_type($doc["tmp_name"]);
+		} else {
+			$filename = $doc["name"];
+			$filecontent = file_get_contents($doc["tmp_name"]);
+			$filetype = mime_content_type($doc["tmp_name"]);
 		}
 
 		//dump($error);
-		if(!$error){
-			try{
-				$obj=$this->createDocument($parentId,$filename,$filecontent,$filetype);
+		if (!$error) {
+			try {
+				$obj = $this->createDocument($parentId, $filename, $filecontent, $filetype);
 
-				if($obj){
+				if ($obj) {
 					return $obj;
-				}else{
-					 return __("L'arxiu <strong>:name</strong> ja existeix al repositori",["name"=>$filename]);
+				} else {
+					return __("L'arxiu <strong>:name</strong> ja existeix al repositori", ["name" => $filename]);
 				}
-			}catch(Exception $e){
-				return __("Error pujant arxiu <strong>:name</strong> al repositori",["name"=>$filename]);
+			} catch (Exception $e) {
+				return __("Error pujant arxiu <strong>:name</strong> al repositori", ["name" => $filename]);
 			}
-		}else{
-			return __("Error pujant arxiu <strong>:name</strong> al repositori",["name"=>$filename]);
+		} else {
+			return __("Error pujant arxiu <strong>:name</strong> al repositori", ["name" => $filename]);
 		}
 	}
 
 
-	public function upload($parentId, $documents){
+	public function upload($parentId, $documents)
+	{
 
-		$ret=array();
+		$ret = array();
 
-		if(is_array($documents)){
-			foreach($documents as $doc){
-				$ret[]=$this->doUpload($parentId,$doc);
+		if (is_array($documents)) {
+			foreach ($documents as $doc) {
+				$ret[] = $this->doUpload($parentId, $doc);
 			}
 			return $ret;
-		}else{
-			return $this->doUpload($parentId,$documents);
+		} else {
+			return $this->doUpload($parentId, $documents);
 		}
 
 		return false;
-
 	}
 
 
@@ -1083,31 +1074,34 @@ class AlfrescoCmisProvider
 	 * Retorna todos los Sites de alfresco (como objetos AlfrescoFolder)
 	 * @return
 	 */
-	public function getSites(){
-		$sitefolder=$this->session->getObjectByPath("/Sites");
-		$sitefolder=$this->fromCmisObject($sitefolder);
+	public function getSites()
+	{
+		$sitefolder = $this->session->getObjectByPath("/Sites");
+		$sitefolder = $this->fromCmisObject($sitefolder);
 
 		return $sitefolder->getChildren();
-
 	}
 
 
 
 
-	public function getPath($path){
+	public function getPath($path)
+	{
 
-		return ltrim(substr( $path , strlen($this->rootpath)),"/");
+		return ltrim(substr($path, strlen($this->rootpath)), "/");
 		//str_replace_first( $this->getBasepath(true), "", $path );
 	}
 
 
-    public function getRepositoryInfo(){
-        return $this->session->getRepositoryInfo();
-    }
+	public function getRepositoryInfo()
+	{
+		return $this->session->getRepositoryInfo();
+	}
 
-    public function getContentChanges($options = array()) {
-        return $this->session->getContentChanges($options);
-    }
+	public function getContentChanges($options = array())
+	{
+		return $this->session->getContentChanges($options);
+	}
 
 
 
@@ -1119,30 +1113,31 @@ class AlfrescoCmisProvider
 	 * @return ArrayList<AlfrescoObject>
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function search($query, $folderId=false, $recursive=false){// throws AlfrescoObjectNotFoundException {
-		if(!$folderId){
-			$base=$this->getBaseFolder();
-			$folderId=$base->id;
+	public function search($query, $folderId = false, $recursive = false)
+	{ // throws AlfrescoObjectNotFoundException {
+		if (!$folderId) {
+			$base = $this->getBaseFolder();
+			$folderId = $base->id;
 		}
 		$query = str_replace("'", "''", $query);
 
-		$parent=$this->getFolder($folderId);
+		$parent = $this->getFolder($folderId);
 
-		$q="SELECT * FROM cmis:document WHERE (cmis:name LIKE '%s' or CONTAINS('%s')) AND ".($recursive?"IN_TREE":"IN_FOLDER") ."('%s') ";
+		$q = "SELECT * FROM cmis:document WHERE (cmis:name LIKE '%s' or CONTAINS('%s')) AND " . ($recursive ? "IN_TREE" : "IN_FOLDER") . "('%s') ";
 
-		$statement=sprintf($q, "%".$query."%" , $query, $folderId);
+		$statement = sprintf($q, "%" . $query . "%", $query, $folderId);
 		//_dump($statement);
 
-		$ret=false;
-		$results=$this->session->query($statement);
+		$ret = false;
+		$results = $this->session->query($statement);
 
-		if($results && isset($results->objectList) && !empty($results->objectList)){
-			$ret=array();
-			foreach($results->objectList as $obj){
+		if ($results && isset($results->objectList) && !empty($results->objectList)) {
+			$ret = array();
+			foreach ($results->objectList as $obj) {
 				//_dump($obj);
-				$okobj=$this->fromCmisObject($obj);
+				$okobj = $this->fromCmisObject($obj);
 				//_dump($okobj);
-				$ret[]=$okobj;
+				$ret[] = $okobj;
 			}
 		}
 		//_dump($ret);
@@ -1165,115 +1160,123 @@ class AlfrescoCmisProvider
 	 * @return ArrayList<AlfrescoObject>
 	 * @throws AlfrescoObjectNotFoundException
 	 */
-	public function searchByPath($query, $folderPath=false, $recursive=false){//	throws AlfrescoObjectNotFoundException {
-		$folder=$this->getFolderByPath($folderPath);
-		if($folder){
-			return $this->search($query, $folder->id,$recursive);
+	public function searchByPath($query, $folderPath = false, $recursive = false)
+	{ //	throws AlfrescoObjectNotFoundException {
+		$folder = $this->getFolderByPath($folderPath);
+		if ($folder) {
+			return $this->search($query, $folder->id, $recursive);
 		}
 	}
 
 
 
-	public function getDownloadUrl($object){
-        return '';
+	public function getDownloadUrl($object)
+	{
+		return '';
 		// return route('alfresco.download',[$object->id]);
-    }
+	}
 
-    /*return the user download url of a file */
-    public function getViewUrl($object){
-        return '';
-        // return route('alfresco.view',[$object->id]);
+	/*return the user download url of a file */
+	public function getViewUrl($object)
+	{
+		return '';
+		// return route('alfresco.view',[$object->id]);
 
-    }
+	}
 
-    /*return the user preview url of a file */
-    public function getPreviewUrl($object){
-        return '';
-        // return route('alfresco.preview',[$object->id]);
-
-    }
-
-
-
-    public function getRepeatedPolicy() {
-        return $this->repeatedPolicy;
-    }
+	/*return the user preview url of a file */
+	public function getPreviewUrl($object)
+	{
+		// return '';
+		return route('alfresco.preview', [$this->settings?->company_id, $object->id]);
+	}
 
 
-    public function setRepeatedPolicy($repeatedPolicy) {
-        if($repeatedPolicy!=self::REPEATED_DENY && $repeatedPolicy!=self::REPEATED_RENAME && $repeatedPolicy!=self::REPEATED_OVERWRITE)
-            $this->repeatedPolicy = self::REPEATED_DENY;
-        else
-            $this->repeatedPolicy = $repeatedPolicy;
-    }
 
-    public function setRepeatedRename() {
-        $this->repeatedPolicy = self::REPEATED_RENAME;
-    }
-    public function setRepeatedOverwrite() {
-        $this->repeatedPolicy = self::REPEATED_OVERWRITE;
-    }
-    public function setRepeatedDeny() {
-        $this->repeatedPolicy = self::REPEATED_DENY;
-    }
+	public function getRepeatedPolicy()
+	{
+		return $this->repeatedPolicy;
+	}
 
 
-    public function isRepeatedRename() {
-        return $this->repeatedPolicy == self::REPEATED_RENAME;
-    }
+	public function setRepeatedPolicy($repeatedPolicy)
+	{
+		if ($repeatedPolicy != self::REPEATED_DENY && $repeatedPolicy != self::REPEATED_RENAME && $repeatedPolicy != self::REPEATED_OVERWRITE)
+			$this->repeatedPolicy = self::REPEATED_DENY;
+		else
+			$this->repeatedPolicy = $repeatedPolicy;
+	}
+
+	public function setRepeatedRename()
+	{
+		$this->repeatedPolicy = self::REPEATED_RENAME;
+	}
+	public function setRepeatedOverwrite()
+	{
+		$this->repeatedPolicy = self::REPEATED_OVERWRITE;
+	}
+	public function setRepeatedDeny()
+	{
+		$this->repeatedPolicy = self::REPEATED_DENY;
+	}
 
 
-    public function isRepeatedOverwrite() {
-        return $this->repeatedPolicy == self::REPEATED_OVERWRITE;
-    }
+	public function isRepeatedRename()
+	{
+		return $this->repeatedPolicy == self::REPEATED_RENAME;
+	}
 
-    public function isRepeatedDeny() {
-        $this->repeatedPolicy == self::REPEATED_DENY;
-    }
 
-    public function getPreview($id, $type="pdf"){
-    	try{
-    		$obj=$this->getDocument($id);
-    		if($obj->isFile()){
-	    		if($obj->isPdf() || $obj->isImage()){
-	    			$content=$obj->getContent();
-	    			$mime=$obj->mimetype;
-	    			$size=$obj->size;
-	    		}else{
-		    		$ret=$this->session->getRenditions($id);
+	public function isRepeatedOverwrite()
+	{
+		return $this->repeatedPolicy == self::REPEATED_OVERWRITE;
+	}
 
-			    	if($ret && $ret->renditions ){
-			    		$renditions=collect($ret->renditions);
-			    		//dd($renditions);
+	public function isRepeatedDeny()
+	{
+		$this->repeatedPolicy == self::REPEATED_DENY;
+	}
 
-			    		if($renditions->where('title',$type)->count()>0){
-			    			$rendition=$renditions->where('title',$type)->first();
-			    			$content=$this->session->getContentStream($rendition["streamId"]);
-			    			$mime=$rendition["mimetype"];
-							$size=$rendition["length"];
+	public function getPreview($id, $type = "pdf")
+	{
+		try {
+			$obj = $this->getDocument($id);
+			if ($obj->isFile()) {
+				if ($obj->isPdf() || $obj->isImage()) {
+					$content = $obj->getContent();
+					$mime = $obj->mimetype;
+					$size = $obj->size;
+				} else {
+					$ret = $this->session->getRenditions($id);
 
-			    		}else{
+					if ($ret && $ret->renditions) {
+						$renditions = collect($ret->renditions);
+						//dd($renditions);
 
-				    		if($renditions->where('title',"doclib")->count()>0){
-				    			$rendition=$renditions->where('title',"doclib")->first();
-				    			$content=$this->session->getContentStream($rendition["streamId"]);
-				    			$mime=$rendition["mimetype"];
-								$size=$rendition["length"];
+						if ($renditions->where('title', $type)->count() > 0) {
+							$rendition = $renditions->where('title', $type)->first();
+							$content = $this->session->getContentStream($rendition["streamId"]);
+							$mime = $rendition["mimetype"];
+							$size = $rendition["length"];
+						} else {
+
+							if ($renditions->where('title', "doclib")->count() > 0) {
+								$rendition = $renditions->where('title', "doclib")->first();
+								$content = $this->session->getContentStream($rendition["streamId"]);
+								$mime = $rendition["mimetype"];
+								$size = $rendition["length"];
 							}
-			    		}
-			    	}
-			    }
+						}
+					}
+				}
 
-				if(isset($content) && $content){
-	 				AlfrescoHelper::download($content, $obj->name, $mime, $size, true);
-			    }
+				if (isset($content) && $content) {
+					AlfrescoHelper::download($content, $obj->name, $mime, $size, true);
+				}
 			}
-	    	return false;
-	    }catch(Exception $e){
-	 		return false;
-	 	}
-    }
-
-
-
+			return false;
+		} catch (Exception $e) {
+			return false;
+		}
+	}
 }
